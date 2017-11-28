@@ -24,12 +24,27 @@ class IMAPFilter {
 		$this->closeConnection();
 	}
 	
+    /**
+     * closeConnection
+     * Closes the current connection, if opened.
+     * 
+     * @return void
+     */
+	
 	public function closeConnection() {
 		if($this->imap_conn != false)
 			imap_close($this->imap_conn);
 		
 		$this->imap_conn = false;
 	}
+	
+    /**
+     * imapSearch
+     * Internal helper function for convience
+     * @param string $filter See: http://php.net/manual/de/function.imap-search.php criteria
+     * 
+     * @return array or single element
+     */
 	
 	private function imapSearch($filter) {
 		$result = imap_search($this->imap_conn, $filter);
@@ -48,6 +63,15 @@ class IMAPFilter {
 		return false;
 	}
 		
+		
+    /**
+     * searchInMailbox
+     * Searchs thorugh an mailbox all mails that matches the criteria and returns the data as string in RFC2060 format for use with PHP
+     * @param string $filter See: http://php.net/manual/de/function.imap-search.php criteria
+     * 
+     * @return string RFC2060 message id list 
+     */
+	
 	public function searchInMailbox($filter) {
 		$result = $this->imapSearch($filter);
 		$return = "";
@@ -70,6 +94,14 @@ class IMAPFilter {
 			return false;
 	}
 	
+    /**
+     *  markMessagesAsSeen 
+	 *
+     *  Will automatically mark every message found with $filter as seen.
+     * @param string $filter See: http://php.net/manual/de/function.imap-search.php criteria
+     * 
+     * @return bool
+     */
 	public function markMessagesAsSeen($filter) {
 		$result = $this->searchInMailbox($filter);
 		
@@ -79,12 +111,27 @@ class IMAPFilter {
 		return imap_setflag_full($this->imap_conn, $result, "\\Seen");
 	}
 	
+    /**
+     * changeMailBox
+     * Changes the current mailbox on an open connection
+     * @param string $mailbox Mailbox you would like to change to, e.g. INBOX.Work
+     * 
+     * @return bool 
+     */
+	
 	public function changeMailbox($mailbox) {
 		if($this->imap_conn != false) {
 			return imap_reopen($this->imap_conn, $this->default_mailbox_server.$mailbox);
 		}
 	}
 	
+    /**
+     *  markMailboxAsSeen
+     * 	Marks all mail's inside a mailbox as seen
+     * @param <type> $mailbox Mailbox where you'd like to set every message as seen e.g. INBOX.Work
+     * 
+     * @return <type>
+     */
 	public function markMailboxAsSeen($mailbox) {
 		if($this->changeMailbox($mailbox)) {
 			$this->markMessagesAsSeen("ALL");
@@ -93,6 +140,14 @@ class IMAPFilter {
 		}
 	}
 
+    /**
+     * moveToMailBox
+     * Moves every message from the current mailbox, that matches the filter, to the destination mailbox.
+     * @param string $filter See: http://php.net/manual/de/function.imap-search.php criteria
+     * @param <type> $dest_mailbox Destination Mailbox, where you'd like to save the messages to e.g. INBOX.Work
+     * 
+     * @return <type>
+     */
 	
 	public function moveToMailbox($filter, $dest_mailbox) {
 		$result = $this->searchInMailbox($filter);
